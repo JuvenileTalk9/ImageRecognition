@@ -32,6 +32,7 @@ def generate_dataset(
                 args.val_ratio,
                 args.batch_size,
                 args.num_workers,
+                enable_flatten=True,
                 enable_one_hot_expression=True,
             )
         elif args.model in ["fnn"]:
@@ -40,7 +41,14 @@ def generate_dataset(
                 args.val_ratio,
                 args.batch_size,
                 args.num_workers,
-                enable_one_hot_expression=False,
+                enable_flatten=True,
+            )
+        elif args.model in ["resnet18"]:
+            dataset = CIFAR10(
+                root,
+                args.val_ratio,
+                args.batch_size,
+                args.num_workers,
             )
         else:
             raise NotImplementedError("実装されていないモデル名です")

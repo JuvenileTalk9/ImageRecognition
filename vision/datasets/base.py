@@ -1,8 +1,9 @@
 import random
-from typing import Tuple
+from typing import Tuple, Any
 
 import numpy as np
 from PIL import Image
+import torch
 from torch.utils.data import Dataset, DataLoader
 
 
@@ -43,24 +44,30 @@ class DatasetBase:
         return indices1, indices2
 
     @classmethod
-    def get_dataset_statistics(cls, dataset: Dataset) -> Tuple[float, float]:
+    def get_dataset_statistics(
+        cls, dataset: Dataset, enable_flatten: bool = False
+    ) -> Tuple[Any, Any]:
         """データセット全体の平均と標準偏差を計算する
 
         Args:
             dataset (Dataset): データセット
+            enable_flatten (bool, optional) : 真なら一次元化する
 
         Returns:
             Tuple[float, float]: 平均と標準偏差
         """
-        imgs = []
-        for data in dataset:
-            imgs.append(data[0])
-        imgs = np.stack(imgs)
+        imgs = [data[0] for data in dataset]
 
-        channel_mean = np.mean(imgs, axis=0)
-        channel_std = np.std(imgs, axis=0)
+        if enable_flatten:
+            imgs = np.stack(imgs)
+            channel_mean = np.mean(imgs, axis=0)
+            channel_std = np.std(imgs, axis=0)
+        else:
+            imgs = torch.stack(imgs)
+            channel_mean = imgs.mean(dim=(0, 2, 3))
+            channel_std = imgs.mean(dim=(0, 2, 3))
 
-        return channel_mean.flatten(), channel_std.flatten()
+        return channel_mean, channel_std
 
     @classmethod
     def standardization(

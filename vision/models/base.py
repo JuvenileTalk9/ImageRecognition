@@ -1,11 +1,14 @@
+import copy
 from typing import Any, Callable
 from enum import Enum
 
-import torch
 import numpy as np
+from torch import nn, device
 
 
 class ModelType(Enum):
+    """モデルタイプを表す列挙型"""
+
     ML: str = 1
     DNN: str = 2
 
@@ -20,6 +23,14 @@ class ModelBase:
             str: モデルの種別
         """
         raise NotImplementedError
+
+    def copy(self) -> Any:
+        """モデルを複製する
+
+        Returns:
+            Any: 複製されたモデル
+        """
+        return copy.deepcopy(self)
 
 
 class MlModelBase(ModelBase):
@@ -63,19 +74,12 @@ class MlModelBase(ModelBase):
         return np.exp(x) / np.sum(np.exp(x), axis=1, keepdims=True)
 
 
-class DnnModelBase(ModelBase, torch.nn.Module):
+class DnnModelBase(ModelBase, nn.Module):
     """DNNのベースクラス"""
 
-    def __init__(self, dim_input: int, num_classes: int) -> None:
-        """コンストラクタ
-
-        Args:
-            dim_input (int): 入力データの次元数
-            num_classes (int): 分類クラス数
-        """
+    def __init__(self) -> None:
+        """コンストラクタ"""
         super().__init__()
-        self.dim_input = dim_input
-        self.num_classes = num_classes
 
     def forward(self, **kwargs) -> Any:
         """順伝搬関数"""
@@ -85,7 +89,7 @@ class DnnModelBase(ModelBase, torch.nn.Module):
         """誤差関数を返す"""
         raise NotImplementedError
 
-    def get_device(self) -> torch.device:
+    def get_device(self) -> device:
         """重みを保持しているデバイスを返す"""
         raise NotImplementedError
 

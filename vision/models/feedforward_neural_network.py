@@ -2,7 +2,7 @@ from typing import Any, Callable
 
 from .base import DnnModelBase
 
-import torch
+from torch import nn, Tensor, device
 
 
 class FNN(DnnModelBase):
@@ -19,42 +19,47 @@ class FNN(DnnModelBase):
             num_hideen_layers (int): 隠れ層の数
             num_classes (int): 分類クラス数
         """
-        super().__init__(dim_input, num_classes)
-        self.layers = torch.nn.ModuleList()
+        super().__init__()
+        self.dim_input = dim_input
+        self.num_classes = num_classes
+        self.layers = nn.ModuleList()
 
         self.layers.append(self.__generate_hidden_layer(dim_input, dim_hidden))
 
         for _ in range(num_hidden_layers - 1):
             self.layers.append(self.__generate_hidden_layer(dim_hidden, dim_hidden))
 
-        self.linear = torch.nn.Linear(dim_hidden, num_classes)
+        self.linear = nn.Linear(dim_hidden, num_classes)
 
-    def forward(self, x: torch.Tensor, return_embed: bool = False) -> Any:
+    def forward(self, x: Tensor, return_embed: bool = False) -> Any:
         """順伝搬関数
 
         Args:
-            x (torch.Tensor): 入力
+            x (Tensor): 入力
             return_embed (bool, optional): 真なら特徴量、偽ならロジットを返すフラグ
 
         Returns:
             Any: 真なら特徴量、偽ならロジット
         """
-        h = x
         for layer in self.layers:
-            h = layer(h)
+            x = layer(x)
 
         # return_embedが真の場合特徴量を返す
         if return_embed:
-            return h
+            return x
         # return_embedが偽の場合特徴量を返す
-        y = self.linear(h)
-        return y
+        x = self.linear(x)
+        return x
 
     def get_loss_function(self) -> Callable:
-        """誤差関数を返す"""
-        return torch.nn.functional.cross_entropy
+        """誤差関数を返す
 
-    def get_device(self) -> torch.device:
+        Returns:
+            Callable: 誤差関数
+        """
+        return nn.functional.cross_entropy
+
+    def get_device(self) -> device:
         """重みを保持しているデバイスを返す
 
         Returns:
@@ -62,9 +67,7 @@ class FNN(DnnModelBase):
         """
         return self.linear.weight.device
 
-    def __generate_hidden_layer(
-        self, dim_input: int, dim_output: int
-    ) -> torch.nn.Sequential:
+    def __generate_hidden_layer(self, dim_input: int, dim_output: int) -> nn.Sequential:
         """隠れ層を生成する
 
         Args:
@@ -72,11 +75,11 @@ class FNN(DnnModelBase):
             dim_output (int): 出力の次元数
 
         Returns:
-            torch.nn.Sequential: 隠れ層
+            nn.Sequential: 隠れ層
         """
-        layer = torch.nn.Sequential(
-            torch.nn.Linear(dim_input, dim_output, bias=False),
-            torch.nn.BatchNorm1d(dim_output),
-            torch.nn.ReLU(inplace=True),
+        layer = nn.Sequential(
+            nn.Linear(dim_input, dim_output, bias=False),
+            nn.BatchNorm1d(dim_output),
+            nn.ReLU(inplace=True),
         )
         return layer

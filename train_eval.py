@@ -59,7 +59,7 @@ def get_parser() -> argparse.ArgumentParser:
 
     # モデル名
     parser.add_argument(
-        "-m", "--model", type=str, required=True, choices=["mlr", "fnn"]
+        "-m", "--model", type=str, required=True, choices=["mlr", "fnn", "resnet18"]
     )
     # データセット名
     parser.add_argument(
